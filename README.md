@@ -5,7 +5,12 @@
 This is the official home of the Java Apereo CAS client. The client consists of a collection of Servlet filters that are suitable for most Java-based web applications. It also serves as an API platform to interact with the CAS server programmatically to make authentication requests, validate tickets and consume principal attributes.
 
 All client artifacts are published to Maven central. Depending on functionality, applications will need include one or more of the listed dependencies in their configuration.
-
+修改:
+1. 增加ajax请求处理. 如果是ajax请求,输出httpstatus 401  {code:401,message:未登录},json输出可使用filter的初始参数ajaxMsg配置覆盖.<br>
+ajax请求判断条件:header里带x-requested-with=XMLHttpRequest,header-accept带application/json或text/json或请求路径扩展名是.json
+2. 增加方法void initParam(final FilterConfig filterConfig)用于继承类加载自定义filter参数
+3. 增加方法void afterFoward(final HttpServletRequest request, final HttpServletResponse response, String serviceUrl)用于继承类自己构造转向cas的url
+4. 修改使用properties文件配置初始参数时,支持从classpath加载配置,如:configFileLocation= classpath:cas.properties
 <a name="build"></a>
 ## Build [![Build Status](https://travis-ci.org/apereo/java-cas-client.png?branch=master)](https://travis-ci.org/apereo/java-cas-client)
 
