@@ -18,16 +18,18 @@
  */
 package org.jasig.cas.client.configuration;
 
-import org.jasig.cas.client.util.CommonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterConfig;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
+
+import org.jasig.cas.client.util.CommonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Scott Battaglia
@@ -83,19 +85,47 @@ public final class PropertiesConfigurationStrategyImpl extends BaseConfiguration
     }
 
     private boolean loadPropertiesFromFile(final String file) {
-        if (CommonUtils.isEmpty(file)) {
-            return false;
-        }
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            this.properties.load(fis);
-            return true;
-        } catch (final IOException e) {
-            LOGGER.warn("Unable to load properties for file {}", file, e);
-            return false;
-        } finally {
-            CommonUtils.closeQuietly(fis);
-        }
+    	if (CommonUtils.isEmpty(file)) {
+			return false;
+		}
+		String preffix = "classpath:";
+		InputStream fis = null;
+		// 从classpath加载属性文件
+		if (file.startsWith(preffix)) {
+			String realFile = file.replace(preffix, "");
+			if (CommonUtils.isEmpty(realFile)) {
+				LOGGER.error("configFileLocation config is error:{}", file);
+				return false;
+			}
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+			if (classLoader == null) {
+				classLoader = getClass().getClassLoader();
+			}
+			// 修正下路径,classLoader不以/开头
+			if (realFile.charAt(0) == '/') {
+				realFile = realFile.substring(1);
+			}
+			fis = classLoader.getResourceAsStream(realFile);
+		} else {
+			try {
+				fis = new FileInputStream(file);
+			} catch (FileNotFoundException e) {
+				LOGGER.warn("Unable to load properties for file {}", file, e);
+				return false;
+			}
+		}
+		try {
+			if (fis != null) {
+				this.properties.load(fis);
+				return true;
+			}else{
+				return false;
+			}
+		} catch (final IOException e) {
+			LOGGER.warn("Unable to load properties for file {}", file, e);
+			return false;
+		} finally {
+			CommonUtils.closeQuietly(fis);
+		}
     }
 }
